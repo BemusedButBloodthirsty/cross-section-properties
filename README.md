@@ -4,7 +4,7 @@
 The basic concept is to triangulate the complex region using the Triangle module and to then determine the moment of inertia of each triangle, with the final result simply being the summation of the MOI's of all triangles.
 
 Required modules:
-- triangle -> (https://rufat.be/triangle/installing.html) or (https://github.com/drufat/triangle)
+- triangle -> https://rufat.be/triangle/installing.html or https://github.com/drufat/triangle
 - numpy
 - matplotlib
 
