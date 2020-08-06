@@ -8,8 +8,11 @@ Required modules:
 - numpy
 - matplotlib
 
+Features:
+- Supports adding holes to any polygon geometry using the Triangle module.
+
 Issues:
 - The moment of inertia results are only approximate. It's recommended to use a sufficient amount of triangles for useful results.
 
-Comments for the people of the internet:	
-- If you can make it better in anyway, I would highly appreciate it. This code (at its current state) primarily serves as a double check to hand-calculations.
+Other comments:	
+- If the code can be improved or expanded upon, I would highly appreciate it. This code (at its current state) primarily serves as a double-check to hand calculations.
