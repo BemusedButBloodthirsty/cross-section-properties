@@ -12,20 +12,17 @@ Current features:
 - Calculates the area of a polygon cross-section, 
 - Calculates the x- and y-centroid coordinates,
 - Calculates the moment of inertia about the x- and y-centroid axes,
-- Supports adding circular holes to any polygon geometry using the Triangle module.
+- Supports adding holes to the polygon geometry using the Triangle module.
 
 Planned features:
+- First moment of area,
 - Product of inertia,
 - Radius of gyration,
 - Polar moment of inertia,
 - Moment of inertia about any axis specified (including inclined axes).
 
 How to use:
-1. Simply change the `pts` list by adding the coordinates which define the outer boundary of the cross-section. The `segments` list required for input in the `Triangle.triangulate()` function is generated automatically based on your `pts` list.
-2. If a circular hole is to be added, the function `addCircularHole(centre, r, n)` can be called (see code for details on parameter input).
+- See `example.py`.
 
 Issues:
-- The moment of inertia results are only approximate. It's recommended to use a sufficient amount of triangles for useful results.
-
-Other comments:	
-- If the code can be improved or expanded upon, I would highly appreciate it. This code (at its current state) primarily serves as a double-check to hand calculations.
+- The calculated results are only approximate. It's recommended to use a sufficient amount of triangles for useful results.
