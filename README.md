@@ -24,5 +24,5 @@ Planned features:
 How to use:
 - See `example.py`.
 
-Issues:
+NOTE:
 - The calculated results are only approximate. It's recommended to use a sufficient amount of triangles for useful results.
