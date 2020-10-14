@@ -1,6 +1,4 @@
-## moment-of-inertia
-### Python script that calculates the moment of inertia (second moment of area) of a section about its centroid.
-
+## cross-section-properties  
 The basic concept is to triangulate the complex region using the Triangle module and to then determine the moment of inertia of each triangle, with the final result simply being the summation of the MOI's of all triangles.
 
 Required modules:
