@@ -1,5 +1,5 @@
 ## cross-section-properties  
-#####Synopsis:
+##### Synopsis:
 Structural engineers often need to determine the second moment of area (aka the moment of inertia) for a specific cross-section. 
 This is necessary for evaluation of the strains and stresses at the outermost fibres of a structural element or for determining the anticipated deflections during serviceability conditions.
 
@@ -9,12 +9,12 @@ However, calculations for more complex shapes (such as T-sections or even triang
 To make this problem much easier to solve, a Python script was made that calculates the second moment of area about the x and y axis (I<sub>x</sub> and I<sub>y</sub>) as well as the product of inertia I<sub>xy</sub> of any polygonal shape. 
 The script allows for more complex polygonal shapes with holes (circular, square, or even a custom user-defined shape) to be specified.  
 
-#####Required Python modules:
+##### Required Python modules:
 - triangle: https://rufat.be/triangle/installing.html or https://github.com/drufat/triangle
 - numpy
 - matplotlib
 
-#####Technical details of the algorithm:
+##### Technical details of the algorithm:
 The computation of the moment of inertia is accomplished as follows:
 - The polygonal shape defined by the user is triangulated,
 - The moment of inertia is calculated on a per-triangle basis according to the following relationships:
@@ -75,7 +75,7 @@ A_{section} = \sum_{j=1}^{N} A_{triangle}
 
 where $d_x$ and $d_y$ denote the distance from the origin to the $x$- and $y$-centroids of the polygonal area respectively.
 
-#####Current features:
+##### Current features:
 - Calculates the area of a polygon cross-section, 
 - Calculates the x- and y-centroid coordinates,
 - Calculates the moment of inertia about the x- and y-centroid axes (I<sub>x</sub> and I<sub>y</sub> respectively),
@@ -86,7 +86,7 @@ $$\begin{align}
 J_0 = I_x + I_y
 \end{align}$$
 
-#####How to use:
+##### How to use:
 An example of a square section has been defined with a circular hole in the middle:
 
 <p align="center">
@@ -95,7 +95,7 @@ An example of a square section has been defined with a circular hole in the midd
 
 - To determine the moments of inertia, see `example.py`.
 
-#####Test case for accuracy evaluation:
+##### Test case for accuracy evaluation:
 The value calculated from this script must be assessed in terms of accuracy.
 A simplistic triangular section was chosen. 
 
@@ -115,5 +115,5 @@ As can be seen, the relative error generally increases for increasing number of 
 
 - See `relative_error_test.py`
 
-#####References:
+##### References:
 https://en.wikipedia.org/wiki/Second_moment_of_area
