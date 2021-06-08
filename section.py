@@ -9,7 +9,7 @@ class CrossSection:
 		self.segs = []
 		self.hls = []
 		self.data = None
-		self.element_area = 0.001
+		self.element_area = 1
 		self.triangulated = False
 		self.tris = None
 		self.section_boundary_specified = False
@@ -160,28 +160,125 @@ class CrossSection:
 		self.__calculate_tri_centroids()
 		return sum(self.areas*self.x_centroids) / sum(self.areas), sum(self.areas*self.y_centroids) / sum(self.areas)
 
+
+	def __tri_moi(self, tri_points):
+		"""
+		tri_points: List or tuple containing the three (x,y) points of a tri in Cartesian coordinates, listed in the counter-clockwise direction.  
+		Returns: Ix, Iy, and Ixy about the origin of the Cartesian axes.
+		Units: Specified by units of triangle points.
+
+		Reference: https://en.wikipedia.org/wiki/Second_moment_of_area#Any_cross_section_defined_as_polygon
+		"""
+
+		# MOI about the origin:
+		# --------------------
+		dx: float = 0
+		dy: float = 0
+
+		Ix_origin:  float = 0
+		Iy_origin:  float = 0
+		Ixy_origin: float = 0
+		for i in range(3): # 3 points of tri.
+			# Get the x and y point of the current vertex:
+			x_i, x_iplus1 = tri_points[i][0], tri_points[(i+1) % 3][0] # Making sure n+1 = 1.
+			y_i, y_iplus1 = tri_points[i][1], tri_points[(i+1) % 3][1]
+			
+			# Data for the centroid calculations:
+			dx += x_i
+			dy += y_i 
+			
+			# Formula for 2x the signed area of the elementary tri: a_i = x_i * y_i+1 - x_i+1 * y_i
+			a_i = x_i * y_iplus1 - x_iplus1 * y_i # This is 2x the area of the triangle.
+
+			# Formulas for the individual moments of area:
+			Ix_origin  += a_i * (y_i**2 + y_i*y_iplus1 + y_iplus1**2)
+			Iy_origin  += a_i * (x_i**2 + x_i*x_iplus1 + x_iplus1**2)
+			Ixy_origin += a_i * (x_i*y_iplus1 + 2*x_i*y_i + 2*x_iplus1*y_iplus1 + x_iplus1*y_i)
+
+		# Correcting the moments of area of the tri (about the origin):
+		Ix_origin  /= 12
+		Iy_origin  /= 12
+		Ixy_origin /= 24
+
+		# # Centroid of tri:
+		# # ---------------
+		# dx /= 3
+		# dy /= 3
+		# # print(dx, dy)
+
+		# # MOI about the centroid of the tri:
+		# # ---------------------------------
+		# Ix:  float = 0
+		# Iy:  float = 0
+		# Ixy: float = 0
+
+		# x_1, x_2, x_3 = tri_points[0][0], tri_points[1][0], tri_points[2][0]
+		# y_1, y_2, y_3 = tri_points[0][1], tri_points[1][1], tri_points[2][1]
+		# tri_area = abs( 0.5 * ( x_1*(y_2 - y_3) + x_2*(y_3 - y_1) + x_3*(y_1 - y_2) ) )
+
+		# Ix  = Ix_origin  - tri_area * dy**2
+		# Iy  = Iy_origin  - tri_area * dx**2
+		# Ixy = Ixy_origin - tri_area * dx*dy
+
+		return Ix_origin, Iy_origin, Ixy_origin
+
+
 	def MomentOfInertia(self):
 		if not self.triangulated:
 			print("Mesh for the section has not been triangulated yet. Use the __object__.TriangulateSection() method first.")
 
-		self.__calculate_tri_areas()
-		self.__calculate_tri_centroids()
+		# self.__calculate_tri_areas()
+		# self.__calculate_tri_centroids()
+		# self.__create_coords_lists()
+
+		# section_x_centroid, section_y_centroid = self.Centroid()
+
+		# self.moi_x = zeros(len(self.areas))
+		# self.moi_y = zeros(len(self.areas))
+
+		# for indx, (x, y) in enumerate(zip(self.x_coords, self.y_coords)):
+		# 	x_max, x_min = max(x), min(x)
+		# 	y_max, y_min = max(y), min(y)
+		# 	b = abs(x_max - x_min)
+		# 	h = abs(y_max - y_min)
+		# 	x_sorted = sorted(x)
+		# 	a = abs(x_sorted[1] - x_sorted[0])
+
+		# 	self.moi_x[indx] = b*h**3/36 + self.areas[indx]*(self.y_centroids[indx] - section_y_centroid)**2
+		# 	self.moi_y[indx] = (b**3*h - b**2*h*a + b*h*a**2)/36 + self.areas[indx]*(self.x_centroids[indx] - section_x_centroid)**2
+
+		#return sum(self.moi_x), sum(self.moi_y)
+
 		self.__create_coords_lists()
 
-		section_x_centroid, section_y_centroid = self.Centroid()
+		a 	   = self.Area()
+		dx, dy = self.Centroid()
 
-		self.moi_x = zeros(len(self.areas))
-		self.moi_y = zeros(len(self.areas))
+		Ix_origin:  float = 0
+		Iy_origin:  float = 0
+		Ixy_origin: float = 0
 
-		for indx, (x, y) in enumerate(zip(self.x_coords, self.y_coords)):
-			x_max, x_min = max(x), min(x)
-			y_max, y_min = max(y), min(y)
-			b = abs(x_max - x_min)
-			h = abs(y_max - y_min)
-			x_sorted = sorted(x)
-			a = abs(x_sorted[1] - x_sorted[0])
+		# Sum I for each triangle, about the origin:
+		for x, y in zip(self.x_coords, self.y_coords):
 
-			self.moi_x[indx] = b*h**3/36 + self.areas[indx]*(self.y_centroids[indx] - section_y_centroid)**2
-			self.moi_y[indx] = (b**3*h - b**2*h*a + b*h*a**2)/36 + self.areas[indx]*(self.x_centroids[indx] - section_x_centroid)**2
+			# Reformat the list:
+			t = [
+				[x[0], y[0]],
+				[x[1], y[1]],
+				[x[2], y[2]]
+			]
 
-		return sum(self.moi_x), sum(self.moi_y)
+			Ix, Iy, Ixy = self.__tri_moi(t)
+
+			Ix_origin += Ix
+			Iy_origin += Iy
+			Ixy_origin += Ixy
+
+		# The I values about the section centroid are given as follows:
+		Ix = Ix_origin - a*dy**2
+		Iy = Iy_origin - a*dx**2
+		Ixy = Ixy_origin - a*dx*dy
+
+		return Ix, Iy, Ixy
+
+		
