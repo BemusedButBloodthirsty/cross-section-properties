@@ -36,7 +36,7 @@ cs.AddRectangularHole(
 
 # Yout can change the element area of each triangle:
 # -------------------------------------------------
-cs.ChangeElementArea(0.01)
+# cs.ChangeElementArea(0.01)
 
 
 # Plot the triangulated mesh:
