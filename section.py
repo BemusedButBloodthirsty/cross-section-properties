@@ -277,7 +277,7 @@ class CrossSection:
 		# The I values about the section centroid are given as follows:
 		Ix = Ix_origin - a*dy**2
 		Iy = Iy_origin - a*dx**2
-		Ixy = Ixy_origin - a*dx*dy
+		Ixy = Ixy_origin - a*abs(dx)*abs(dy)
 
 		return Ix, Iy, Ixy
 
