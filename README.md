@@ -111,7 +111,6 @@ The triangle was triangulated using different values for the element areas (see 
 
 As can be seen, the relative error generally increases for increasing number of triangles due to compounding rounding errors, but the maximum error made is surprisingly small (E-14). 
 
-- See `relative_error_test.py`
 
 ##### References:
 https://en.wikipedia.org/wiki/Second_moment_of_area
