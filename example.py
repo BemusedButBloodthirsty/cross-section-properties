@@ -18,7 +18,7 @@ cs.addCircularHole(centre=[0.5,0.5], r=0.2, n=50)
 # cs.addCustomHole(inside_point=[0.5,0.5], hole_points=[[0.1,0.1],[0.5,0.9],[0.9,0.1]])
 
 # Triangulate the section:
-cs.setElementArea(1) # NOTE: The smaller the element size, the better the calculated results. Defaults to 1 if this line is omitted.
+cs.setElementArea(1) # NOTE: Defaults to 1 if this line is omitted.
 cs.TriangulateSection()
 
 # Plot the mesh:
