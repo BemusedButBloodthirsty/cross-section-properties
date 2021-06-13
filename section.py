@@ -9,7 +9,7 @@ class CrossSection:
 		self.__segs = []
 		self.__hls = []
 		self.__data = []
-		self.__element_area = 1
+		self.__element_area = 10_000 # High as possible number to reduce number of tris.
 		self.__tris = []
 		# self.__section_boundary_specified = False
 		self.__areas = []
@@ -20,6 +20,7 @@ class CrossSection:
 		self.__moi_x = []
 		self.__moi_y = []
 		self.__moi_xy = []
+		self.__tri_q = []
 
 		self.__set_boundary_points(points_list)
 		self.__triangulate_section()
@@ -38,6 +39,18 @@ class CrossSection:
 			return var_max, True
 		else:
 			return var, False
+
+
+	# def __clear_data(self, ):
+	# 	self.__areas = []
+	# 	self.__x_centroids = []
+	# 	self.__y_centroids = []
+	# 	self.__x_coords = []
+	# 	self.__y_coords = []
+	# 	self.__moi_x = []
+	# 	self.__moi_y = []
+	# 	self.__moi_xy = []
+	# 	return
 
 
 	def __create_segments(self, geom_pts, closed=True):
@@ -60,17 +73,23 @@ class CrossSection:
 	
 
 	def __triangulate_section(self):
+		self.__data = []
+		self.__tris = []
+
 		# self.__triangulated = True
 		if len(self.__hls) >  0:
 			self.__data = dict(vertices=self.__pts, segments=self.__segs, holes=self.__hls)
 		else:
 			self.__data = dict(vertices=self.__pts, segments=self.__segs)
 		self.__tris = tr.triangulate(self.__data, opts=f"qpa{self.__element_area}")
-		self.__areas = zeros(len(self.__tris['triangles']))
+		# self.__areas = zeros(len(self.__tris['triangles']))
 	
 	
 	def __create_coords_lists(self):
-		for indx, t in enumerate(self.__tris['triangles']):
+		self.__x_coords = []
+		self.__y_coords = []
+		
+		for t in self.__tris['triangles']:
 			tri_points = self.__tris['vertices'][t]
 			x1, y1 = tri_points[0][0], tri_points[0][1]
 			x2, y2 = tri_points[1][0], tri_points[1][1]
@@ -80,25 +99,27 @@ class CrossSection:
 
 
 	def __calculate_tri_areas(self):
-		for indx, t in enumerate(self.__tris['triangles']):
+		self.__areas = []
+		
+		for t in self.__tris['triangles']:
 			tri_points = self.__tris['vertices'][t]
 			x1, y1 = tri_points[0][0], tri_points[0][1]
 			x2, y2 = tri_points[1][0], tri_points[1][1]
 			x3, y3 = tri_points[2][0], tri_points[2][1]
-			self.__areas[indx] = 0.5*((x1*y2 - x2*y1) + (x3*y1 - x1*y3) + (x2*y3 - x3*y2))
+			self.__areas.append( 0.5*((x1*y2 - x2*y1) + (x3*y1 - x1*y3) + (x2*y3 - x3*y2)) )
 
 
 	def __calculate_tri_centroids(self):
-		self.__x_centroids = zeros(len(self.__areas))
-		self.__y_centroids = zeros(len(self.__areas))
+		self.__x_centroids = []
+		self.__y_centroids = []
 
-		for indx, t in enumerate(self.__tris['triangles']):
+		for t in self.__tris['triangles']:
 			tri_points = self.__tris['vertices'][t]
 			x1, y1 = tri_points[0][0], tri_points[0][1]
 			x2, y2 = tri_points[1][0], tri_points[1][1]
 			x3, y3 = tri_points[2][0], tri_points[2][1]
-			self.__x_centroids[indx] = (x1 + x2 + x3) / 3
-			self.__y_centroids[indx] = (y1 + y2 + y3) / 3
+			self.__x_centroids.append( (x1 + x2 + x3) / 3 )
+			self.__y_centroids.append( (y1 + y2 + y3) / 3 )
 
 
 	def __tri_moi(self, tri_points):
@@ -240,6 +261,8 @@ class CrossSection:
 	def Area(self):
 		# if not self.__triangulated:
 		# 	print("Mesh for the section has not been triangulated yet. Use the __object__.TriangulateSection() method first.")
+		# self.__clear_data()
+		
 		self.__calculate_tri_areas()
 		return sum(self.__areas)
 
@@ -247,14 +270,24 @@ class CrossSection:
 	def Centroid(self):
 		# if not self.__triangulated:
 		# 	print("Mesh for the section has not been triangulated yet. Use the __object__.TriangulateSection() method first.")
+		# self.__clear_data()
+		
 		self.__calculate_tri_areas()
 		self.__calculate_tri_centroids()
-		return sum(self.__areas*self.__x_centroids) / sum(self.__areas), sum(self.__areas*self.__y_centroids) / sum(self.__areas)
+
+		sum_areas = sum(self.__areas)
+		sum_x_centroid_mult_areas = sum([xc * a for xc, a in zip(self.__x_centroids, self.__areas)])
+		sum_y_centroid_mult_areas = sum([yc * a for yc, a in zip(self.__y_centroids, self.__areas)])
+
+		return sum_x_centroid_mult_areas / sum_areas, sum_y_centroid_mult_areas / sum_areas
 
 
 	def MomentOfInertia(self):
 		# if not self.__triangulated:
 		# 	print("Mesh for the section has not been triangulated yet. Use the __object__.TriangulateSection() method first.")
+		self.__moi_x  = []
+		self.__moi_y  = []
+		self.__moi_xy = []
 
 		self.__create_coords_lists()
 
@@ -285,12 +318,15 @@ class CrossSection:
 		return Ix, Iy, Ixy
 
 
-	def MomentOfArea(self, y=0, extra_hole=None):
+	def MomentOfArea(self, y=0, extra_hole=None, plot_mesh=True):
 		"""
 		y: Distance specified above or below the neutral axis of the section. Clamped to the min and max y-coordinate specified in the boundary points.
 		
 		Defaults to the centroid if not specified (i.e. maximum moment of area).
 		"""
+		self.__tri_q_top = []
+		self.__tri_q_bot = []
+
 		yc = self.Centroid()[1]
 		if y == 0:
 			y = yc
@@ -320,10 +356,13 @@ class CrossSection:
 		self.__triangulate_section()
 		yc = self.Centroid()[1]
 		
-		self.Plot()
-		print("Clamped:", clamped)
+		if plot_mesh:
+			self.Plot()
+		# print("Clamped:", clamped)
 
-		Q = 0
+		# Q = 0
+		# Q_top = 0
+		# Q_bot = 0
 		if not clamped:
 			# If the value was clamped, this means that the boundary edges are selected,
 			# thus it means that the Q value will be zero.
@@ -331,7 +370,11 @@ class CrossSection:
 			for tri_area, tri_y_centroid in zip(self.__areas, self.__y_centroids):
 				if tri_y_centroid > yc:
 					# This can be used to calculate the Q value:
-					Q += abs(tri_y_centroid - yc) * tri_area 
+					# self.__tri_q.append( abs(tri_y_centroid - yc) * tri_area )
+					self.__tri_q_top.append( abs(tri_y_centroid - yc) * tri_area )
+
+				if tri_y_centroid < yc:
+					self.__tri_q_bot.append( abs(tri_y_centroid - yc) * tri_area )
 
 		# Restore the previous triangulation:
 		self.__pts = old_pts
@@ -339,4 +382,7 @@ class CrossSection:
 		self.__hls = old_hls
 		self.__triangulate_section()
 		# self.Plot()
-		return Q		
+
+		# print("BOOL (E-3):", abs(Q_bot - sum(self.__tri_q)) < 1e-3)
+
+		return sum(self.__tri_q_top), sum(self.__tri_q_bot), clamped	
